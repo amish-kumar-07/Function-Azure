@@ -1,0 +1,248 @@
+WEBSITE ERRORS ONLY
+================================================================================
+Base URL: http://localhost:5173/
+Generated: 2025-08-27T09:03:38.399Z
+Total Errors: 41
+================================================================================
+
+http://localhost:5173/ (3 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:25.672Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=300&h=400&fit=crop
+   Resource: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=300&h=400&fit=crop
+
+2. [2025-08-27T09:03:25.672Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+3. [2025-08-27T09:03:28.618Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=300&h=400&fit=crop
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/characters (4 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:30.493Z] PAGEERROR
+   Message: MapPin is not defined
+   Stack: ReferenceError: MapPin is not defined
+       at <anonymous> (http://localhost:5173/src/pages/Characters.tsx:379:36)
+       at Characters (http://localhost:5173/src/pages/Characters.tsx:324:95)
+
+2. [2025-08-27T09:03:30.552Z] PAGEERROR
+   Message: MapPin is not defined
+   Stack: ReferenceError: MapPin is not defined
+       at <anonymous> (http://localhost:5173/src/pages/Characters.tsx:379:36)
+       at Characters (http://localhost:5173/src/pages/Characters.tsx:324:95)
+
+3. [2025-08-27T09:03:30.579Z] ERROR
+   Message: The above error occurred in the <Characters> component:
+
+    at Characters (http://localhost:5173/src/pages/Characters.tsx:120:39)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4069:5)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4508:5)
+    at main
+    at div
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4451:15)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:5196:5)
+    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=79143541:2794:3)
+    at O (http://localhost:5173/node_modules/.vite/deps/next-themes.js?v=79143541:23:25)
+    at z (http://localhost:5173/node_modules/.vite/deps/next-themes.js?v=79143541:21:18)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+4. [2025-08-27T09:03:30.580Z] PAGEERROR
+   Message: MapPin is not defined
+   Stack: ReferenceError: MapPin is not defined
+       at <anonymous> (http://localhost:5173/src/pages/Characters.tsx:379:36)
+       at Characters (http://localhost:5173/src/pages/Characters.tsx:324:95)
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/episodes (6 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:31.540Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=225&fit=crop
+   Resource: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=225&fit=crop
+
+2. [2025-08-27T09:03:31.540Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+3. [2025-08-27T09:03:31.962Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=225&fit=crop
+   Resource: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=225&fit=crop
+
+4. [2025-08-27T09:03:31.963Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+5. [2025-08-27T09:03:32.557Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=225&fit=crop
+
+6. [2025-08-27T09:03:32.557Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=225&fit=crop
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/jutsu (6 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:30.244Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop
+   Resource: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop
+
+2. [2025-08-27T09:03:30.245Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+3. [2025-08-27T09:03:30.561Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=300&fit=crop
+   Resource: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=300&fit=crop
+
+4. [2025-08-27T09:03:30.561Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+5. [2025-08-27T09:03:31.783Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=300&fit=crop
+
+6. [2025-08-27T09:03:31.783Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=300&fit=crop
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/villages (4 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:33.958Z] PAGEERROR
+   Message: BookOpen is not defined
+   Stack: ReferenceError: BookOpen is not defined
+       at Villages (http://localhost:5173/src/pages/Villages.tsx:476:36)
+       at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-WERSD76P.js?v=79143541:11548:26)
+
+2. [2025-08-27T09:03:34.036Z] PAGEERROR
+   Message: BookOpen is not defined
+   Stack: ReferenceError: BookOpen is not defined
+       at Villages (http://localhost:5173/src/pages/Villages.tsx:476:36)
+       at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-WERSD76P.js?v=79143541:11548:26)
+
+3. [2025-08-27T09:03:34.060Z] ERROR
+   Message: The above error occurred in the <Villages> component:
+
+    at Villages (http://localhost:5173/src/pages/Villages.tsx:107:49)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4069:5)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4508:5)
+    at main
+    at div
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4451:15)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:5196:5)
+    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=79143541:2794:3)
+    at O (http://localhost:5173/node_modules/.vite/deps/next-themes.js?v=79143541:23:25)
+    at z (http://localhost:5173/node_modules/.vite/deps/next-themes.js?v=79143541:21:18)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+4. [2025-08-27T09:03:34.062Z] PAGEERROR
+   Message: BookOpen is not defined
+   Stack: ReferenceError: BookOpen is not defined
+       at Villages (http://localhost:5173/src/pages/Villages.tsx:476:36)
+       at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-WERSD76P.js?v=79143541:11548:26)
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/news (4 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:33.973Z] PAGEERROR
+   Message: SelectContent is not defined
+   Stack: ReferenceError: SelectContent is not defined
+       at News (http://localhost:5173/src/pages/News.tsx:382:34)
+       at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-WERSD76P.js?v=79143541:11548:26)
+
+2. [2025-08-27T09:03:34.049Z] PAGEERROR
+   Message: SelectContent is not defined
+   Stack: ReferenceError: SelectContent is not defined
+       at News (http://localhost:5173/src/pages/News.tsx:382:34)
+       at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-WERSD76P.js?v=79143541:11548:26)
+
+3. [2025-08-27T09:03:34.092Z] ERROR
+   Message: The above error occurred in the <News> component:
+
+    at News (http://localhost:5173/src/pages/News.tsx:127:39)
+    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4069:5)
+    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4508:5)
+    at main
+    at div
+    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:4451:15)
+    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=79143541:5196:5)
+    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=79143541:2794:3)
+    at O (http://localhost:5173/node_modules/.vite/deps/next-themes.js?v=79143541:23:25)
+    at z (http://localhost:5173/node_modules/.vite/deps/next-themes.js?v=79143541:21:18)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+4. [2025-08-27T09:03:34.093Z] PAGEERROR
+   Message: SelectContent is not defined
+   Stack: ReferenceError: SelectContent is not defined
+       at News (http://localhost:5173/src/pages/News.tsx:382:34)
+       at renderWithHooks (http://localhost:5173/node_modules/.vite/deps/chunk-WERSD76P.js?v=79143541:11548:26)
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/gallery (6 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:33.572Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=300&h=400&fit=crop
+   Resource: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=300&h=400&fit=crop
+
+2. [2025-08-27T09:03:33.572Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+3. [2025-08-27T09:03:34.008Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=300&h=400&fit=crop
+   Resource: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=300&h=400&fit=crop
+
+4. [2025-08-27T09:03:34.009Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+5. [2025-08-27T09:03:35.328Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=300&h=400&fit=crop
+
+6. [2025-08-27T09:03:35.328Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=300&h=400&fit=crop
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/merchandise (6 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:37.044Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=400&fit=crop
+   Resource: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=400&fit=crop
+
+2. [2025-08-27T09:03:37.045Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+3. [2025-08-27T09:03:37.304Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=400&fit=crop
+   Resource: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=400&fit=crop
+
+4. [2025-08-27T09:03:37.305Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+5. [2025-08-27T09:03:38.376Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1494790108755-2616c6b9e2b8?w=400&h=400&fit=crop
+
+6. [2025-08-27T09:03:38.376Z] BROKEN-IMAGE
+   Message: Broken image: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=400&h=400&fit=crop
+
+────────────────────────────────────────────────────────────
+
+http://localhost:5173/community (2 errors)
+────────────────────────────────────────────────────────────
+1. [2025-08-27T09:03:36.689Z] HTTP-ERROR
+   Message: HTTP 404: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=100&h=100&fit=crop
+   Resource: https://images.unsplash.com/photo-1566492031773-4f4e44671d66?w=100&h=100&fit=crop
+
+2. [2025-08-27T09:03:36.689Z] ERROR
+   Message: Failed to load resource: the server responded with a status of 404 ()
+
+────────────────────────────────────────────────────────────
+

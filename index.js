@@ -697,6 +697,7 @@ const crawlWithQueue = async (
 };
 
 // Enhanced Markdown formatting function
+// Enhanced Markdown formatting function
 const generateMarkdownReport = (baseUrl, results) => {
   const allLogs = results.flatMap(r => r.logs || []);
 
@@ -717,7 +718,9 @@ const generateMarkdownReport = (baseUrl, results) => {
     markdown += `## Errors (${errorLogs.length})\n`;
     errorLogs.forEach((log, i) => {
       markdown += `### ${i + 1}. [${log.type.toUpperCase()}]\n`;
-      markdown += `- **URL:** ${log.url || 'N/A'}\n`;
+      // Use pageUrl (where the error occurred) or url (if it's a resource error) or the base URL as fallback
+      const sourceUrl = log.pageUrl || log.url || baseUrl;
+      markdown += `- **URL:** ${sourceUrl}\n`;
       markdown += `- **Message:** ${log.message}\n\n`;
     });
   } else {

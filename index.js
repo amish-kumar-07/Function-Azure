@@ -123,8 +123,8 @@ const checkPageForErrors = async (
     page = await browser.newPage();
 
     // Set a reasonable timeout for page operations
-    page.setDefaultTimeout(20000);
-    page.setDefaultNavigationTimeout(20000);
+    page.setDefaultTimeout(30000); // Increased timeout
+    page.setDefaultNavigationTimeout(30000);
 
     // Set viewport for consistent rendering
     await page.setViewport({ width: 1280, height: 720 });
@@ -231,7 +231,7 @@ const checkPageForErrors = async (
 
       const response = await page.goto(url, { 
         waitUntil: 'domcontentloaded',
-        timeout: 20000 
+        timeout: 30000 // Increased timeout
       });
 
       // Check if navigation was successful
@@ -268,7 +268,7 @@ const checkPageForErrors = async (
     }
 
     // Minimal wait for initial render
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Slightly longer wait
 
     // Simplified error handler injection
     try {
@@ -391,7 +391,7 @@ const checkPageForErrors = async (
     } else if (error.message.includes('Protocol error')) {
       errorMessage = `Browser protocol error - connection unstable`;
     } else if (error.message.includes('timeout') || error.message.includes('Navigation timeout')) {
-      errorMessage = `Page load timeout (20s) - page may be slow or unresponsive`;
+      errorMessage = `Page load timeout (30s) - page may be slow or unresponsive`;
     } else if (error.message.includes('net::ERR_')) {
       errorMessage = `Network error: ${error.message}`;
     }
@@ -567,14 +567,14 @@ const writeCrawlResultsToFile = (baseUrl, results) => {
   return { logFile: logFilename, errorFile: errorFilename };
 };
 
-// FIXED Enhanced parallel crawling function
+// FIXED Enhanced parallel crawling function - Better queue management
 const crawlWithQueue = async (
   browser, 
   startUrl, 
   maxPages, 
   crawlDepth, 
   crawlSameOriginOnly,
-  maxConcurrency = 3
+  maxConcurrency = 2 // Reduced concurrency for stability
 ) => {
   
   const results = [];
@@ -584,12 +584,16 @@ const crawlWithQueue = async (
   console.log(`Starting enhanced crawl of: ${startUrl}`);
   console.log(`Settings: maxPages=${maxPages}, depth=${crawlDepth}, sameOrigin=${crawlSameOriginOnly}, concurrency=${maxConcurrency}`);
 
-  // Process all URLs sequentially to ensure proper error collection
+  // Process URLs level by level to ensure proper crawling
   while (pendingUrls.length > 0 && results.length < maxPages) {
-    const currentBatch = [];
+    // Sort pending URLs by depth to process level by level
+    pendingUrls.sort((a, b) => a.depth - b.depth);
     
-    // Take up to maxConcurrency URLs for this batch
-    for (let i = 0; i < maxConcurrency && pendingUrls.length > 0 && results.length + currentBatch.length < maxPages; i++) {
+    const currentBatch = [];
+    const remainingSlots = maxPages - results.length;
+    
+    // Take up to maxConcurrency URLs for this batch, prioritizing lower depths
+    for (let i = 0; i < Math.min(maxConcurrency, remainingSlots) && pendingUrls.length > 0; i++) {
       const urlItem = pendingUrls.shift();
       if (urlItem) {
         const normalizedUrl = normalizeUrl(urlItem.url);
@@ -601,40 +605,129 @@ const crawlWithQueue = async (
     }
 
     if (currentBatch.length === 0) {
+      console.log('No more unique URLs to process');
       break;
     }
 
-    // Process batch in parallel - EVERY URL goes through checkPageForErrors
+    console.log(`Processing batch of ${currentBatch.length} URLs (${results.length}/${maxPages} completed)`);
+
+    // Process batch with proper error handling
     const batchPromises = currentBatch.map(async ({ url, depth }) => {
-      // This is the key fix - ALWAYS call checkPageForErrors for error collection
-      const result = await checkPageForErrors(browser, url, depth, startUrl, crawlSameOriginOnly);
-      
-      // After error checking, if successful and not at max depth, collect links for next level
-      if (result.status === 'success' && depth < crawlDepth - 1 && result.extractedLinks && result.extractedLinks.length > 0) {
-        const newLinks = result.extractedLinks
-          .filter(link => !visitedUrls.has(normalizeUrl(link)))
-          .map(link => ({ url: link, depth: depth + 1 }));
+      try {
+        const result = await checkPageForErrors(browser, url, depth, startUrl, crawlSameOriginOnly);
         
-        // Add new links to pending queue
-        pendingUrls.push(...newLinks);
-        console.log(`[${getDomain(url)}] Added ${newLinks.length} new links at depth ${depth + 1}`);
+        // After successful crawl, collect links for next depth level
+        if (result.status === 'success' && 
+            depth < crawlDepth - 1 && 
+            result.extractedLinks && 
+            result.extractedLinks.length > 0) {
+          
+          const newLinks = result.extractedLinks
+            .filter(link => !visitedUrls.has(normalizeUrl(link)))
+            .slice(0, 20) // Limit links per page to prevent explosion
+            .map(link => ({ url: link, depth: depth + 1 }));
+          
+          // Add new links to pending queue
+          pendingUrls.push(...newLinks);
+          console.log(`[${getDomain(url)}] Added ${newLinks.length} new links for depth ${depth + 1}`);
+        }
+        
+        // Clean result for return
+        const { extractedLinks, ...cleanResult } = result;
+        return cleanResult;
+        
+      } catch (error) {
+        console.error(`Error processing ${url}:`, error.message);
+        return {
+          url,
+          status: 'error',
+          errorCount: 1,
+          logs: [{
+            type: 'crawl-error',
+            message: `Batch processing error: ${error.message}`,
+            timestamp: new Date().toISOString(),
+            pageUrl: url
+          }],
+          depth,
+          error: error.message
+        };
       }
-      
-      // Remove extractedLinks from final result to maintain API shape
-      const { extractedLinks, ...cleanResult } = result;
-      return cleanResult;
     });
 
-    // Wait for batch to complete
-    const batchResults = await Promise.all(batchPromises);
-    results.push(...batchResults);
-    
-    console.log(`Progress: ${results.length}/${maxPages} pages processed, ${pendingUrls.length} URLs pending`);
+    // Wait for all URLs in batch to complete
+    try {
+      const batchResults = await Promise.allSettled(batchPromises);
+      
+      // Process results and add successful ones
+      batchResults.forEach((promiseResult, index) => {
+        if (promiseResult.status === 'fulfilled') {
+          results.push(promiseResult.value);
+        } else {
+          console.error(`Batch promise failed for ${currentBatch[index]?.url}:`, promiseResult.reason);
+          results.push({
+            url: currentBatch[index]?.url || 'unknown',
+            status: 'error',
+            errorCount: 1,
+            logs: [{
+              type: 'crawl-error',
+              message: `Promise rejection: ${promiseResult.reason?.message || 'Unknown error'}`,
+              timestamp: new Date().toISOString(),
+              pageUrl: currentBatch[index]?.url || 'unknown'
+            }],
+            depth: currentBatch[index]?.depth || 0
+          });
+        }
+      });
+      
+      console.log(`Batch completed. Progress: ${results.length}/${maxPages} pages, ${pendingUrls.length} URLs pending`);
+      
+      // Small delay between batches to prevent overwhelming the server
+      if (pendingUrls.length > 0 && results.length < maxPages) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+    } catch (error) {
+      console.error('Batch processing error:', error.message);
+      break; // Exit if batch processing fails
+    }
   }
 
-  console.log(`Crawl completed: processed ${results.length} pages`);
+  console.log(`Crawl completed: processed ${results.length} pages total`);
   return results;
 };
+
+// Enhanced Markdown formatting function
+const generateMarkdownReport = (baseUrl, results) => {
+  const allLogs = results.flatMap(r => r.logs || []);
+
+  // Filter: only keep meaningful errors (skip empty 404 noise)
+  const errorLogs = allLogs.filter(log =>
+    ['error', 'pageerror', 'javascript-error', 'unhandled-rejection'].includes(log.type) &&
+    log.message.trim() !== 'Failed to load resource: the server responded with a status of 404 ()'
+  );
+
+  const totalPages = results.length;
+  const successfulPages = results.filter(r => r.status === 'success').length;
+  const failedPages = results.filter(r => r.status === 'error').length;
+
+  let markdown = `# Crawl Report\n\n`;
+  markdown += `**Base URL:** ${baseUrl}\n\n`;
+
+  if (errorLogs.length > 0) {
+    markdown += `## Errors (${errorLogs.length})\n`;
+    errorLogs.forEach((log, i) => {
+      markdown += `### ${i + 1}. [${log.type.toUpperCase()}]\n`;
+      markdown += `- **URL:** ${log.url || 'N/A'}\n`;
+      markdown += `- **Message:** ${log.message}\n\n`;
+    });
+  } else {
+    markdown += `## Errors\nNo errors found ✅\n`;
+  }
+
+  return markdown;
+};
+
+
 
 // Azure Function entry point
 module.exports = async function (context, req) {
@@ -645,13 +738,14 @@ module.exports = async function (context, req) {
     maxPages = 10, 
     crawlDepth = 2,
     crawlSameOriginOnly = true,
-    maxConcurrency = 3
+    maxConcurrency = 2 // Reduced default concurrency
   } = req.body || {};
 
   if (!url) {
     context.res = {
       status: 400,
-      body: { success: false, error: 'URL is required' }
+      headers: { "Content-Type": "text/markdown" },
+      body: `# ❌ Crawl Failed\n\n**Error:** URL is required\n\n## Usage\nPlease provide a valid URL in the request body:\n\`\`\`json\n{\n  "url": "https://example.com",\n  "maxPages": 10,\n  "crawlDepth": 2\n}\n\`\`\``
     };
     return;
   }
@@ -662,7 +756,8 @@ module.exports = async function (context, req) {
   } catch {
     context.res = {
       status: 400,
-      body: { success: false, error: 'Invalid URL format' }
+      headers: { "Content-Type": "text/markdown" },
+      body: `# ❌ Crawl Failed\n\n**Error:** Invalid URL format\n\n**Provided URL:** \`${url}\`\n\n## Requirements\n- URL must include protocol (http:// or https://)\n- URL must be properly formatted\n\n**Example:** \`https://example.com\``
     };
     return;
   }
@@ -671,6 +766,8 @@ module.exports = async function (context, req) {
   let results = [];
 
   try {
+    context.log('Launching browser...');
+    
     browser = await puppeteer.launch({
       headless: true,
       args: [
@@ -687,74 +784,62 @@ module.exports = async function (context, req) {
         '--disable-renderer-backgrounding',
         '--disable-background-networking',
         '--disable-ipc-flooding-protection',
-        '--memory-pressure-off'
+        '--memory-pressure-off',
+        '--max-old-space-size=2048' // Increased memory limit
       ],
       timeout: 60000,
       protocolTimeout: 60000
     });
 
-    // Run enhanced crawling with FIXED queue processing
+    context.log('Browser launched successfully');
+    context.log(`Starting crawl with settings: maxPages=${maxPages}, depth=${crawlDepth}, concurrency=${maxConcurrency}`);
+
+    // Run crawling with improved queue management
     results = await crawlWithQueue(browser, url, maxPages, crawlDepth, crawlSameOriginOnly, maxConcurrency);
 
-    context.log(`Crawl completed: ${results.length} pages checked`);
+    context.log(`Crawl completed: ${results.length} pages processed`);
 
-    // Calculate comprehensive summary
-    const totalErrors = results.reduce((sum, result) => sum + result.errorCount, 0);
-    const allLogs = results.flatMap(result => result.logs);
-    const importantLogs = allLogs.filter(log => 
-      ['error', 'warn', 'warning', 'pageerror', 'javascript-error', 'unhandled-rejection', 'network-error', 'http-error', 'crawl-error', 'broken-image'].includes(log.type)
-    );
-
-    context.log(`Total errors found: ${totalErrors}`);
-
-    // Write results to files
-    const { logFile, errorFile } = writeCrawlResultsToFile(url, results);
-
-    const summary = {
-      baseUrl: url,
-      totalPages: results.length,
-      successfulPages: results.filter(r => r.status === 'success').length,
-      failedPages: results.filter(r => r.status === 'error').length,
-      totalLogs: allLogs.length,
-      totalErrors: totalErrors,
-      logFile,
-      errorFile,
-      timestamp: new Date().toISOString(),
-      settings: {
-        maxPages,
-        crawlDepth,
-        crawlSameOriginOnly,
-        maxConcurrency
-      }
-    };
+    // Generate enhanced markdown report
+    const markdownOutput = generateMarkdownReport(url, results);
 
     context.res = {
       status: 200,
-      body: { 
-        success: true, 
-        logs: importantLogs,
-        results,
-        summary
-      }
+      headers: { 
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Cache-Control": "no-cache"
+      },
+      body: markdownOutput
     };
 
   } catch (error) {
     context.log.error('Crawl Error:', error.message);
+    context.log.error('Stack trace:', error.stack);
+
+    let errorMessage = error.message;
+    let suggestions = '';
+
+    // Provide specific error handling suggestions
+    if (error.message.includes('timeout') || error.message.includes('Navigation timeout')) {
+      suggestions = `\n\n## Possible Solutions\n- The website may be slow or unresponsive\n- Try reducing the number of pages to crawl\n- Check if the website is accessible from your browser\n`;
+    } else if (error.message.includes('net::ERR_')) {
+      suggestions = `\n\n## Possible Solutions\n- Check your internet connection\n- Verify the URL is correct and accessible\n- The website may be blocking automated requests\n`;
+    } else if (error.message.includes('Browser')) {
+      suggestions = `\n\n## Possible Solutions\n- Browser initialization failed\n- Try again in a few moments\n- Reduce concurrency settings if provided\n`;
+    }
 
     context.res = {
       status: 500,
-      body: {
-        success: false,
-        error: error.message,
-        results
-      }
+      headers: { "Content-Type": "text/markdown; charset=utf-8" },
+      body: `# ❌ Crawl Failed\n\n**Error:** ${errorMessage}\n\n**URL:** ${url}\n**Timestamp:** ${new Date().toISOString()}\n\n**Partial Results:** ${results.length} pages were processed before the error occurred.${suggestions}\n\n---\n*If this error persists, please check the website accessibility and try again with different parameters.*`
     };
   } finally {
     if (browser) {
       try {
+        context.log('Closing browser...');
         await browser.close();
+        context.log('Browser closed successfully');
       } catch (e) {
-        context.log.warn('Error closing browser:', e);
+        context.log.warn('Error closing browser:', e.message);
       }
     }
   }

@@ -1,7 +1,6 @@
 const { app } = require('@azure/functions');
 const puppeteer = require('puppeteer');
 
-
 // Function to extract domain from URL
 const getDomain = (url) => {
   try {
@@ -865,35 +864,21 @@ const generateMarkdownReport = (baseUrl, results) => {
 
   // Enhanced error filtering and categorization
   const errorLogs = allLogs.filter(log =>
-    ['error', 'pageerror', 'javascript-error', 'unhandled-rejection', 'warning'].includes(log.type) &&
+    ['error', 'pageerror', 'javascript-error', 'unhandled-rejection'].includes(log.type) &&
     typeof log.message === 'string' &&
     log.message.trim() !== '' &&
     log.message.trim() !== '{}' &&
     !log.message.includes('Failed to load resource: the server responded with a status of 404 ()')
   );
 
-  const totalPages = results.length;
-  const successfulPages = results.filter(r => r.status === 'success').length;
   const partialSuccessPages = results.filter(r => r.status === 'partial-success').length;
-  const failedPages = results.filter(r => r.status === 'error').length;
 
   // Enhanced statistics
   let markdown = `# Crawl Report\n\n`;
   markdown += `**Base URL:** ${baseUrl}\n`;
-  markdown += `**Pages Crawled:** ${totalPages}\n`;
-  markdown += `**Fully Successful:** ${successfulPages}\n`;
   if (partialSuccessPages > 0) {
     markdown += `**Partially Successful:** ${partialSuccessPages} (loaded with errors or fallback strategies used)\n`;
   }
-  markdown += `**Failed to Load:** ${failedPages}\n`;
-  markdown += `**Total Errors Found:** ${errorLogs.length}\n\n`;
-
-  // Crawl resilience summary
-  const navigationSuccessful = results.filter(r => r.navigationSuccessful !== false).length;
-  markdown += `## Crawl Resilience Summary\n`;
-  markdown += `- **Pages Successfully Navigated:** ${navigationSuccessful}/${totalPages}\n`;
-  markdown += `- **Pages with Navigation Issues:** ${totalPages - navigationSuccessful}/${totalPages}\n`;
-  markdown += `- **Crawl Completion Rate:** ${((totalPages / Math.max(1, totalPages)) * 100).toFixed(1)}%\n\n`;
 
   if (errorLogs.length > 0) {
     // Group errors by type for better organization
@@ -988,20 +973,6 @@ const generateMarkdownReport = (baseUrl, results) => {
     
     markdown += `${i + 1}. [${status}] ${result.url} - ${errorCount} errors${loadTime}${depth}\n`;
   });
-
-  // Add crawl statistics
-  markdown += `\n## Crawl Statistics\n`;
-  const avgLoadTime = results.filter(r => r.loadTime).reduce((sum, r) => sum + r.loadTime, 0) / Math.max(1, results.filter(r => r.loadTime).length);
-  const totalErrors = results.reduce((sum, r) => sum + (r.errorCount || 0), 0);
-  
-  markdown += `- **Average Load Time:** ${avgLoadTime.toFixed(0)}ms\n`;
-  markdown += `- **Total Errors Across All Pages:** ${totalErrors}\n`;
-  markdown += `- **Pages with Zero Errors:** ${results.filter(r => (r.errorCount || 0) === 0).length}\n`;
-  markdown += `- **Most Common Error Type:** ${errorLogs.length > 0 ? 
-    Object.entries(errorLogs.reduce((acc, log) => {
-      acc[log.type] = (acc[log.type] || 0) + 1;
-      return acc;
-    }, {})).sort(([,a], [,b]) => b - a)[0]?.[0]?.replace(/-/g, ' ') || 'None' : 'None'}\n`;
 
   return markdown;
 };

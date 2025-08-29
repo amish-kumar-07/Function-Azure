@@ -3,14 +3,16 @@
   "version": "1.0.0",
   "description": "Azure Function for crawling websites and detecting errors",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "func start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "puppeteer": "^24.17.0"
+  "engines": {
+    "node": "18.x"
   },
-  "devDependencies": {
-    "@azure/functions": "^3.0.0"
+  "dependencies": {
+    "puppeteer": "^24.17.0",
+    "@azure/functions": "^4.0.0"
   }
 }

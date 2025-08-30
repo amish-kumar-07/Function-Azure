@@ -758,8 +758,6 @@ const crawlWithQueue = async (
         // Check if this was the homepage that failed
         const isHomepage = normalizeUrl(url) === normalizeUrl(startUrl);
         if (isHomepage) {
-          homepageProcessed = true;
-          homepageFailed = true;
           console.log(`[${getDomain(url)}] Homepage batch processing failed, will use fallback strategies`);
         }
         
@@ -797,8 +795,6 @@ const crawlWithQueue = async (
           // Check if this was the homepage that failed
           const isHomepage = normalizeUrl(currentBatch[index]?.url) === normalizeUrl(startUrl);
           if (isHomepage) {
-            homepageProcessed = true;
-            homepageFailed = true;
             console.log(`[${getDomain(currentBatch[index]?.url)}] Homepage promise failed, will use fallback strategies`);
           }
           
@@ -977,7 +973,7 @@ const generateMarkdownReport = (baseUrl, results) => {
   return markdown;
 };
 
-// Enhanced Azure Functions HTTP trigger with robust error handling
+// Enhanced Azure Functions HTTP trigger with Docker-compatible Puppeteer configuration
 app.http('crawl', {
   methods: ['POST'],
   authLevel: 'anonymous',
@@ -1028,28 +1024,70 @@ app.http('crawl', {
     try {
       context.log('Launching browser...');
       
-      browser = await puppeteer.launch({
+      // Enhanced browser configuration for Docker environment
+      const browserArgs = [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--no-first-run',
+        '--disable-default-apps',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-background-networking',
+        '--disable-ipc-flooding-protection',
+        '--memory-pressure-off',
+        '--max-old-space-size=2048',
+        // Additional Docker-specific args
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-sync',
+        '--disable-translate',
+        '--disable-background-downloads',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-client-side-phishing-detection',
+        '--disable-default-apps',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-domain-reliability',
+        '--disable-component-update',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-field-trial-config',
+        '--disable-back-forward-cache',
+        '--disable-ipc-flooding-protection',
+        '--run-all-compositor-stages-before-draw',
+        '--disable-features=TranslateUI,BlinkGenPropertyTrees,VizDisplayCompositor,AudioServiceOutOfProcess',
+        '--single-process' // Add this for better compatibility in containers
+      ];
+
+      // Detect if we're running in Docker/Container environment
+      const isDocker = process.env.PUPPETEER_EXECUTABLE_PATH || 
+                       process.env.CHROME_BIN || 
+                       require('fs').existsSync('/.dockerenv');
+
+      const launchConfig = {
         headless: true,
-        args: [
-          '--no-sandbox', 
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--disable-web-security',
-          '--disable-features=VizDisplayCompositor',
-          '--no-first-run',
-          '--disable-default-apps',
-          '--disable-background-timer-throttling',
-          '--disable-backgrounding-occluded-windows',
-          '--disable-renderer-backgrounding',
-          '--disable-background-networking',
-          '--disable-ipc-flooding-protection',
-          '--memory-pressure-off',
-          '--max-old-space-size=2048'
-        ],
+        args: browserArgs,
         timeout: 60000,
         protocolTimeout: 60000
-      });
+      };
+
+      // Use system Chrome if available (Docker environment)
+      if (isDocker) {
+        const chromePath = process.env.PUPPETEER_EXECUTABLE_PATH || 
+                          process.env.CHROME_BIN || 
+                          '/usr/bin/google-chrome-stable';
+        
+        context.log(`Using system Chrome at: ${chromePath}`);
+        launchConfig.executablePath = chromePath;
+      }
+
+      browser = await puppeteer.launch(launchConfig);
 
       context.log('Browser launched successfully');
       console.log('Browser version:', await browser.version());
@@ -1061,7 +1099,7 @@ app.http('crawl', {
         context.log(`Crawl completed: ${results.length} pages processed with enhanced resilience`);
       } catch (crawlError) {
         // Even if crawlWithQueue throws an error, we continue with partial results
-        context.log.error('Crawl error occurred, but continuing with partial results:', crawlError.message);
+        context.error('Crawl error occurred, but continuing with partial results:', crawlError.message);
         
         // If results is empty due to early failure, create a basic error result
         if (results.length === 0) {
@@ -1095,8 +1133,8 @@ app.http('crawl', {
       };
 
     } catch (error) {
-      context.log.error('Critical system error:', error.message);
-      context.log.error('Stack trace:', error.stack);
+      context.error('Critical system error:', error.message);
+      context.error('Stack trace:', error.stack);
 
       let errorMessage = error.message;
       let suggestions = '';
@@ -1106,8 +1144,8 @@ app.http('crawl', {
         suggestions = `\n\n## Possible Solutions\n- The website may be slow or unresponsive\n- Try reducing the number of pages to crawl\n- Check if the website is accessible from your browser\n`;
       } else if (error.message.includes('net::ERR_')) {
         suggestions = `\n\n## Possible Solutions\n- Check your internet connection\n- Verify the URL is correct and accessible\n- The website may be blocking automated requests\n`;
-      } else if (error.message.includes('Browser')) {
-        suggestions = `\n\n## Possible Solutions\n- Browser initialization failed\n- Try again in a few moments\n- Reduce concurrency settings if provided\n`;
+      } else if (error.message.includes('Browser') || error.message.includes('Chrome')) {
+        suggestions = `\n\n## Possible Solutions\n- Browser initialization failed\n- Chrome may not be properly installed in the container\n- Check Docker configuration and Chrome dependencies\n`;
       }
 
       // Generate report even for critical failures if we have partial results
@@ -1117,7 +1155,7 @@ app.http('crawl', {
           reportContent = generateMarkdownReport(url, results);
           reportContent += `\n\n---\n## Critical Error During Crawl\n\n**Error:** ${errorMessage}\n**Timestamp:** ${new Date().toISOString()}\n\n**Note:** The above results were collected before the critical error occurred.${suggestions}`;
         } catch (reportError) {
-          context.log.error('Failed to generate report from partial results:', reportError.message);
+          context.error('Failed to generate report from partial results:', reportError.message);
           reportContent = `# Crawl Partially Completed\n\n**Error:** ${errorMessage}\n\n**URL:** ${url}\n**Timestamp:** ${new Date().toISOString()}\n\n**Partial Results:** ${results.length} pages were processed before the critical error occurred.\n\nReport generation failed, but crawl data was collected.${suggestions}`;
         }
       } else {

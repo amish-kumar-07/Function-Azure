@@ -12,7 +12,14 @@
     "node": "18.x"
   },
   "dependencies": {
-    "puppeteer": "^24.17.0",
-    "@azure/functions": "^4.0.0"
+    "@azure/functions": "^4.0.0",
+    "puppeteer": "^24.17.1",
+    "puppeteer-core": "^24.17.1"
+  },
+  "config": {
+    "puppeteer_skip_chromium_download": true
+  },
+  "puppeteer": {
+    "skipDownload": true
   }
 }
